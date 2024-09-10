@@ -1,5 +1,4 @@
 import * as dgram from "dgram";
-
 console.log("Logs from your file will appear here!");
 
 const server = dgram.createSocket("udp4");
