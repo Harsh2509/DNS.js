@@ -44,7 +44,11 @@ export class DNSHeader {
       header.rcode;
 
     buffer.writeUInt16BE(header.id, 0);
-    buffer.writeUInt16BE(header.id, 0);
+    buffer.writeUInt16BE(flags, 2);
+    buffer.writeUInt16BE(header.qdcount, 4);
+    buffer.writeUInt16BE(header.ancount, 6);
+    buffer.writeUInt16BE(header.nscount, 8);
+    buffer.writeUInt16BE(header.arcount, 10);
 
     return buffer;
   }
