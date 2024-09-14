@@ -49,7 +49,22 @@ server.on("message", (msg: Buffer, remoteAddress: dgram.RemoteInfo) => {
     console.log(
       `Message received from ${remoteAddress.address}:${remoteAddress.port}`
     );
-    const header = DNSHeader.encode(defaultHeaders);
+    const requestHeader = DNSHeader.decode(msg.subarray(0, 12));
+    let rcode = RCODE.NO_ERROR;
+    if (requestHeader.opcode != 0) {
+      rcode = RCODE.NOT_IMPLEMENTED;
+    }
+
+    const header = DNSHeader.encode({
+      ...requestHeader,
+      qr: 1,
+      aa: 0,
+      tc: 0,
+      ra: 0,
+      z: 0,
+      rcode,
+      ancount: requestHeader.qdcount,
+    });
     const question = DNSQuestion.encode([defaultQuestion]);
     const answer = DNSAnswer.encode([defaultAnswer]);
     const response = Buffer.concat([header, question, answer]);

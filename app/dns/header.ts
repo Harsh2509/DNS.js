@@ -52,4 +52,23 @@ export class DNSHeader {
 
     return buffer;
   }
+  static decode(buffer: Buffer): Header {
+    const id = buffer.readUInt16BE(0);
+    const flags = buffer.readUInt16BE(2);
+    return {
+      id: id,
+      qr: flags >> 15,
+      opcode: (flags >> 11) & 0b1111,
+      aa: (flags >> 10) & 0b1,
+      tc: (flags >> 9) & 0b1,
+      rd: (flags >> 8) & 0b1,
+      ra: (flags >> 7) & 0b1,
+      z: (flags >> 4) & 0b111,
+      rcode: flags & 0b1111,
+      qdcount: buffer.readUInt16BE(4),
+      ancount: buffer.readUInt16BE(6),
+      nscount: buffer.readUInt16BE(8),
+      arcount: buffer.readUInt16BE(10),
+    };
+  }
 }
