@@ -1,35 +1,7 @@
 import * as dgram from "dgram";
-import { DNSHeader, OPCODE, RCODE, type Header } from "./dns/header";
-import {
-  DNSQuestion,
-  QuestionClass,
-  QuestionType,
-  type Question,
-} from "./dns/question";
+import { DNSHeader, RCODE } from "./dns/header";
+import { DNSQuestion } from "./dns/question";
 import { AnswerClass, AnswerType, DNSAnswer, type Answer } from "./dns/answer";
-
-// I am using the default headers for now.
-const defaultHeaders: Header = {
-  id: 12,
-  qr: 1, // For response, it is set   // For request, it is unset
-  opcode: OPCODE.STANDARD_QUERY,
-  aa: 0, // Authoritative answer
-  tc: 0, // Truncated: 1 if the message is larger than 512 bytes.
-  ra: 0, // Recursion available
-  rd: 0, // Recursion desired
-  z: 0, // Reserved for future use
-  rcode: RCODE.NO_ERROR,
-  qdcount: 1, // Number of questions
-  ancount: 1, // Number of answers
-  nscount: 0, // Number of authority records
-  arcount: 0, // Number of additional records
-};
-
-const defaultQuestion: Question = {
-  qname: "google.com",
-  qtype: QuestionType.A, // A type record
-  qclass: QuestionClass.IN, // Internet
-};
 
 const defaultAnswer: Answer = {
   name: "google.com",
@@ -50,6 +22,10 @@ server.on("message", (msg: Buffer, remoteAddress: dgram.RemoteInfo) => {
       `Message received from ${remoteAddress.address}:${remoteAddress.port}`
     );
     const requestHeader = DNSHeader.decode(msg.subarray(0, 12));
+    const requestQuestion = DNSQuestion.decode(msg.subarray(12));
+    console.log(`Request header: ${JSON.stringify(requestHeader)}`);
+    console.log(`Request question: ${JSON.stringify(requestQuestion)}`);
+
     let rcode = RCODE.NO_ERROR;
     if (requestHeader.opcode != 0) {
       rcode = RCODE.NOT_IMPLEMENTED;
@@ -65,8 +41,12 @@ server.on("message", (msg: Buffer, remoteAddress: dgram.RemoteInfo) => {
       rcode,
       ancount: requestHeader.qdcount,
     });
-    const question = DNSQuestion.encode([defaultQuestion]);
-    const answer = DNSAnswer.encode([defaultAnswer]);
+    const question = DNSQuestion.encode(requestQuestion);
+    const answer = DNSAnswer.encode(
+      requestQuestion.map((question) => {
+        return { ...defaultAnswer, name: question.qname };
+      })
+    );
     const response = Buffer.concat([header, question, answer]);
 
     server.send(response, remoteAddress.port, remoteAddress.address);

@@ -50,4 +50,35 @@ export class DNSQuestion {
       })
     );
   }
+
+  static decode(buffer: Buffer) {
+    const questions: Question[] = [];
+    let offset = 0;
+    while (offset < buffer.length) {
+      let qname = "";
+      let qtype = 0;
+      let qclass = 0;
+
+      let length = buffer.readUInt8(offset);
+      offset++;
+      while (length > 0) {
+        qname += buffer.toString("utf-8", offset, offset + length);
+        offset += length;
+        length = buffer.readUInt8(offset);
+        offset++;
+        if (length > 0) {
+          qname += ".";
+        }
+      }
+
+      qtype = buffer.readUInt16BE(offset);
+      offset += 2;
+      qclass = buffer.readUInt16BE(offset);
+      offset += 2;
+
+      questions.push({ qname, qtype, qclass });
+    }
+
+    return questions;
+  }
 }

@@ -1,5 +1,7 @@
 import * as dgram from "dgram";
 import { DNSHeader, OPCODE, RCODE, type Header } from "./dns/header";
+import { DNSQuestion, QuestionClass, QuestionType } from "./dns/question";
+import { DNSAnswer } from "./dns/answer";
 
 // Sending this header from the client to the server
 const defaultHeaders: Header = {
@@ -18,16 +20,27 @@ const defaultHeaders: Header = {
   arcount: 0, // Number of additional records
 };
 
+const defaultQuestion = {
+  qname: "google.com",
+  qtype: QuestionType.A,
+  qclass: QuestionClass.IN,
+};
+
 const HOST = "127.0.0.1";
 const PORT = 2053;
-const message = DNSHeader.encode(defaultHeaders);
+const message = Buffer.concat([
+  DNSHeader.encode(defaultHeaders),
+  DNSQuestion.encode([defaultQuestion]),
+]);
 const client = dgram.createSocket("udp4");
 client.bind(2054, "127.0.0.1");
 
 client.on("message", function (msg: Buffer, rinfo: dgram.RemoteInfo) {
-  // print the value of buffer
   const header = DNSHeader.decode(msg.subarray(0, 12));
+  const questionLength = DNSQuestion.encode([defaultQuestion]).length;
+  const question = DNSQuestion.decode(msg.subarray(12, 12 + questionLength));
   console.log(`header received from server: ${JSON.stringify(header)}`);
+  console.log(`question received from server: ${JSON.stringify(question)}`);
   client.close();
 });
 
