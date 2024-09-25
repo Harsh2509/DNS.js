@@ -22,8 +22,8 @@ server.on("message", (msg: Buffer, remoteAddress: dgram.RemoteInfo) => {
       `Message received from ${remoteAddress.address}:${remoteAddress.port}`
     );
     const requestHeader = DNSHeader.decode(msg.subarray(0, 12));
-    const requestQuestion = DNSQuestion.decode(msg.subarray(12));
     console.log(`Request header: ${JSON.stringify(requestHeader)}`);
+    const requestQuestion = DNSQuestion.decode(msg.subarray(12));
     console.log(`Request question: ${JSON.stringify(requestQuestion)}`);
 
     let rcode = RCODE.NO_ERROR;
